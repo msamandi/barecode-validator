@@ -6,7 +6,6 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 dependency-reduced-pom.xml
-.flattened-pom.xml
 
 # IDEs
 .idea/
@@ -32,40 +31,6 @@ dependency-reduced-pom.xml
 *.log
 logs/
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Virtual machine crash logs
-hs_err_pid*
-
-# Mac
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Linux
-.~*
-
-# Node (if used)
-node_modules/
 
 # Gradle (if applicable)
 .gradle/
