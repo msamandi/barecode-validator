@@ -15,7 +15,7 @@ public class ValidateResponse {
         this.valid = valid;
     }
 
-    public boolean getValid() {
+    public boolean isValid() {
         return valid;
     }
 }

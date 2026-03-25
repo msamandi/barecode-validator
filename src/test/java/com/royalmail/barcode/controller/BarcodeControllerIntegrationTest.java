@@ -88,7 +88,8 @@ class BarcodeControllerIntegrationTest {
             mockMvc.perform(get("/validate")
                             .param("barcode", "   ")
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
         }
     }
 

@@ -10,6 +10,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import javax.validation.ConstraintViolationException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
@@ -62,6 +63,31 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
 
         logger.warn("Validation error - Fields: {}", errors);
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Validation failed: " + errors,
+                "VALIDATION_ERROR",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle method parameter validation errors (query params, path vars, headers).
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request) {
+
+        String errors = ex.getConstraintViolations()
+                .stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.joining(", "));
+
+        logger.warn("Constraint violation - {}", errors);
 
         ErrorResponse errorResponse = new ErrorResponse(
                 "Validation failed: " + errors,

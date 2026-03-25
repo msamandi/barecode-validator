@@ -29,7 +29,8 @@ class BarcodeValidatorServiceTest {
 
         @Test
         @DisplayName("should return true for the worked example AA473124829GB")
-        void workedExample() {
+        void workedExample()
+        {
             assertThat(service.validate("AA473124829GB")).isTrue();
         }
 

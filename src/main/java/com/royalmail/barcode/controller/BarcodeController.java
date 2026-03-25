@@ -1,6 +1,5 @@
 package com.royalmail.barcode.controller;
 
-import com.royalmail.barcode.exception.InvalidInputException;
 import com.royalmail.barcode.model.ValidateRequest;
 import com.royalmail.barcode.model.ValidateResponse;
 import com.royalmail.barcode.service.BarcodeValidatorService;
@@ -13,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.constraints.NotBlank;
 
 /**
  * REST controller exposing the S10 barcode validation endpoint.
@@ -48,18 +49,10 @@ public class BarcodeController {
      */
     @GetMapping("/validate")
     public ResponseEntity<ValidateResponse> validateGet(
-            @RequestParam String barcode) {
+            @RequestParam @NotBlank(message = "Barcode must not be blank") String barcode) {
 
         logger.info("Processing GET /validate request with barcode");
 
-        if (barcode == null || barcode.isBlank()) {
-            logger.warn("Invalid input - barcode is null or blank");
-            throw new InvalidInputException(
-                    "Barcode must not be null or blank",
-                    "BLANK_BARCODE",
-                    "barcode"
-            );
-        }
 
         logger.debug("Validating barcode: {}", barcode);
         boolean result = validatorService.validate(barcode);
