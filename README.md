@@ -33,11 +33,15 @@ The service starts on **http://localhost:8080**.
 
 ---
 
-### 2. Call the endpoint
+### 2. Call the API
 
-```
-GET /validate?barcode=<barcode_value>
-```
+The service exposes three endpoints:
+
+1. `GET /validate?barcode=<barcode_value>`
+2. `POST /validate`
+3. `POST /validate/batch`
+
+#### GET /validate
 
 **Valid barcode example:**
 
@@ -63,8 +67,84 @@ curl "http://localhost:8080/validate?barcode=AA473124828GB"
 
 ```bash
 curl "http://localhost:8080/validate"
-# → 400 Bad Request
 ```
+
+Returns `400 Bad Request` with structured error payload.
+
+#### POST /validate
+
+Use POST when sending JSON payloads.
+
+```bash
+curl -X POST "http://localhost:8080/validate" \
+  -H "Content-Type: application/json" \
+  -d '{"barcode": "AA473124829GB"}'
+```
+
+```json
+{"valid": true}
+```
+
+Invalid request example:
+
+```bash
+curl -X POST "http://localhost:8080/validate" \
+  -H "Content-Type: application/json" \
+  -d '{"barcode": "   "}'
+```
+
+Returns `400 Bad Request` with `VALIDATION_ERROR`.
+
+#### POST /validate/batch
+
+Validate multiple barcodes in one request.
+
+```bash
+curl -X POST "http://localhost:8080/validate/batch" \
+  -H "Content-Type: application/json" \
+  -d '{"barcodes": ["AA473124829GB", "AA473124828GB", "1A473124829GB"]}'
+```
+
+```json
+{
+  "results": [
+    {"barcode": "AA473124829GB", "valid": true},
+    {"barcode": "AA473124828GB", "valid": false},
+    {"barcode": "1A473124829GB", "valid": false}
+  ]
+}
+```
+
+Invalid request example (empty list):
+
+```bash
+curl -X POST "http://localhost:8080/validate/batch" \
+  -H "Content-Type: application/json" \
+  -d '{"barcodes": []}'
+```
+
+Returns `400 Bad Request` with `VALIDATION_ERROR`.
+
+### Error response format
+
+For `4xx` and `5xx` responses, the API returns a consistent JSON payload:
+
+```json
+{
+  "message": "Validation failed: barcode: Barcode must not be blank",
+  "errorCode": "VALIDATION_ERROR",
+  "status": 400,
+  "path": "/validate",
+  "timestamp": "2026-03-25T17:00:00"
+}
+```
+
+Common error codes:
+
+- `VALIDATION_ERROR`
+- `MISSING_PARAMETER`
+- `INVALID_JSON`
+- `INTERNAL_SERVER_ERROR`
 
 ---
 
@@ -121,15 +201,23 @@ barcode-validator/
     ├── main/java/com/royalmail/barcode/
     │   ├── BarcodeValidatorApplication.java   ← Spring Boot entry point
     │   ├── controller/
-    │   │   └── BarcodeController.java          ← GET /validate endpoint
+    │   │   └── BarcodeController.java          ← GET /validate, POST /validate, POST /validate/batch
+    │   ├── exception/
+    │   │   └── GlobalExceptionHandler.java     ← centralized error handling
     │   ├── service/
-    │   │   └── BarcodeValidatorService.java    ← validation + check digit logic
+    │   │   └── BarcodeValidatorService.java    ← single + batch validation logic
     │   └── model/
-    │       └── ValidateResponse.java           ← JSON response wrapper
+    │       ├── ValidateRequest.java
+    │       ├── ValidateResponse.java
+    │       ├── BatchValidateRequest.java
+    │       ├── BatchValidateItemResponse.java
+    │       ├── BatchValidateResponse.java
+    │       └── ErrorResponse.java
     └── test/java/com/royalmail/barcode/
         ├── service/
         │   └── BarcodeValidatorServiceTest.java ← unit tests
         └── controller/
-            └── BarcodeControllerIntegrationTest.java ← full-stack tests
+            ├── BarcodeControllerIntegrationTest.java ← full-stack endpoint tests
+            └── BarcodeControllerServerErrorTest.java ← 500 error-path tests
 ```
 

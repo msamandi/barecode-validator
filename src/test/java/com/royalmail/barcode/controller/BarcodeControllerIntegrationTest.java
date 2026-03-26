@@ -187,4 +187,70 @@ class BarcodeControllerIntegrationTest {
                     .andExpect(status().isBadRequest());
         }
     }
+
+    // -------------------------------------------------------------------------
+    // POST /validate/batch endpoint tests
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("POST /validate/batch")
+    class PostBatchValidateEndpoint {
+
+        @Test
+        @DisplayName("POST /validate/batch with mixed barcodes → 200 with per-item results")
+        void mixedBarcodes_returns200WithResults() throws Exception {
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"barcodes\": [\"AA473124829GB\", \"AA473124828GB\", \"1A473124829GB\"]}"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.results.length()").value(3))
+                    .andExpect(jsonPath("$.results[0].barcode").value("AA473124829GB"))
+                    .andExpect(jsonPath("$.results[0].valid").value(true))
+                    .andExpect(jsonPath("$.results[1].barcode").value("AA473124828GB"))
+                    .andExpect(jsonPath("$.results[1].valid").value(false))
+                    .andExpect(jsonPath("$.results[2].barcode").value("1A473124829GB"))
+                    .andExpect(jsonPath("$.results[2].valid").value(false));
+        }
+
+        @Test
+        @DisplayName("POST /validate/batch with missing barcodes field → 400 Bad Request")
+        void missingBarcodesField_returns400() throws Exception {
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        }
+
+        @Test
+        @DisplayName("POST /validate/batch with empty barcodes list → 400 Bad Request")
+        void emptyBarcodesList_returns400() throws Exception {
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"barcodes\": []}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        }
+
+        @Test
+        @DisplayName("POST /validate/batch with blank barcode entry → 400 Bad Request")
+        void blankBarcodeEntry_returns400() throws Exception {
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"barcodes\": [\"AA473124829GB\", \"   \"]}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        }
+
+        @Test
+        @DisplayName("POST /validate/batch with invalid JSON → 400 Bad Request")
+        void invalidJson_returns400() throws Exception {
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("invalid json"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value("INVALID_JSON"));
+        }
+    }
 }

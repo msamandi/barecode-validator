@@ -11,6 +11,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -93,6 +96,34 @@ class BarcodeControllerServerErrorTest {
                     .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please try again later."))
                     .andExpect(jsonPath("$.timestamp").exists())
                     .andExpect(jsonPath("$.path").value("/validate"));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /validate/batch – service crashes unexpectedly
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("POST /validate/batch – unexpected service failure")
+    class PostBatchServiceFailure {
+
+        @Test
+        @DisplayName("Service throws RuntimeException → 500 with errorCode INTERNAL_SERVER_ERROR")
+        void serviceThrowsRuntimeException_returns500() throws Exception {
+            when(barcodeValidatorService.validateBatch(anyList()))
+                    .thenThrow(new RuntimeException("Unexpected service failure"));
+
+            mockMvc.perform(post("/validate/batch")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"barcodes\": [\"AA473124829GB\", \"AA473124828GB\"]}")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.errorCode").value("INTERNAL_SERVER_ERROR"))
+                    .andExpect(jsonPath("$.status").value(500))
+                    .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please try again later."))
+                    .andExpect(jsonPath("$.timestamp").exists())
+                    .andExpect(jsonPath("$.path").value("/validate/batch"));
         }
     }
 }

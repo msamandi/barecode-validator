@@ -157,6 +157,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>( , HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

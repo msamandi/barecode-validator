@@ -1,5 +1,6 @@
 package com.royalmail.barcode.service;
 
+import com.royalmail.barcode.model.BatchValidateItemResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -7,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -142,6 +145,30 @@ class BarcodeValidatorServiceTest {
             assertThat(service.validate("AA473124828GB")).isFalse();
             // try 0
             assertThat(service.validate("AA473124820GB")).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Batch validation")
+    class BatchValidation {
+
+        @Test
+        @DisplayName("should return one result per barcode in the same order")
+        void validateBatchReturnsOrderedResults() {
+            List<BatchValidateItemResponse> results = service.validateBatch(List.of(
+                    "AA473124829GB",
+                    "AA473124828GB",
+                    "1A473124829GB"
+            ));
+
+            assertThat(results)
+                    .extracting(BatchValidateItemResponse::getBarcode,
+                            BatchValidateItemResponse::isValid)
+                    .containsExactly(
+                            org.assertj.core.groups.Tuple.tuple("AA473124829GB", true),
+                            org.assertj.core.groups.Tuple.tuple("AA473124828GB", false),
+                            org.assertj.core.groups.Tuple.tuple("1A473124829GB", false)
+                    );
         }
     }
 }

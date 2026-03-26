@@ -1,5 +1,7 @@
 package com.royalmail.barcode.controller;
 
+import com.royalmail.barcode.model.BatchValidateRequest;
+import com.royalmail.barcode.model.BatchValidateResponse;
 import com.royalmail.barcode.model.ValidateRequest;
 import com.royalmail.barcode.model.ValidateResponse;
 import com.royalmail.barcode.service.BarcodeValidatorService;
@@ -25,6 +27,8 @@ import javax.validation.constraints.NotBlank;
  * <pre>
  *   GET /validate?barcode=AA473124829GB  → {"valid": true}
  *   POST /validate {"barcode":"AA473124829GB"}  → {"valid": true}
+ *   POST /validate/batch {"barcodes":["AA473124829GB","AA473124828GB"]}
+ *       → {"results":[{"barcode":"AA473124829GB","valid":true},{"barcode":"AA473124828GB","valid":false}]}
  *   GET /validate?barcode=AA473124828GB  → {"valid": false}
  *   POST /validate {"barcode":"AA473124828GB"}  → {"valid": false}
  * </pre>
@@ -77,5 +81,25 @@ public class BarcodeController {
         boolean result = validatorService.validate(barcode);
         
         return ResponseEntity.ok(new ValidateResponse(result));
+    }
+
+    /**
+     * Validates multiple S10 barcodes via POST request.
+     *
+     * @param request the request body containing the list of barcodes
+     * @return {@code 200 OK} with one result per barcode; or {@code 400 Bad Request}
+     *         if the request body is missing, malformed, or contains blank entries
+     */
+    @PostMapping("/validate/batch")
+    public ResponseEntity<BatchValidateResponse> validateBatchPost(
+            @RequestBody @Validated BatchValidateRequest request) {
+
+        logger.debug("Validating batch of {} barcodes", request.getBarcodes().size());
+
+        BatchValidateResponse response = new BatchValidateResponse(
+                validatorService.validateBatch(request.getBarcodes())
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

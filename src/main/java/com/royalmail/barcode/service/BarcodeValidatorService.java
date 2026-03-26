@@ -1,8 +1,12 @@
 package com.royalmail.barcode.service;
 
+import com.royalmail.barcode.model.BatchValidateItemResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service responsible for validating Royal Mail S10 barcodes.
@@ -62,6 +66,21 @@ public class BarcodeValidatorService {
                 && isValidSerial(serial)
                 && isValidCheckDigit(serial, checkChar)
                 && isValidCountryCode(countryCode);
+    }
+
+    /**
+     * Validates multiple barcodes in a single call.
+     *
+     * @param barcodes the barcodes to validate
+     * @return a result entry for each supplied barcode in the same order
+     */
+    public List<BatchValidateItemResponse> validateBatch(List<String> barcodes) {
+        return barcodes.stream()
+                .map(barcode -> {
+                    String normalizedBarcode = barcode == null ? null : barcode.trim();
+                    return new BatchValidateItemResponse(normalizedBarcode, validate(normalizedBarcode));
+                })
+                .collect(Collectors.toList());
     }
 
     // -------------------------------------------------------------------------
